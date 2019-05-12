@@ -1,0 +1,4 @@
+{
+    "mongo_url": "mongodb://USERNAME:PASSWORD@HOST_IP",
+    "tg_alarmer_keys": ["ALARMER-BOT-KEY(S)"]
+}

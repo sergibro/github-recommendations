@@ -1,0 +1,7 @@
+/resources/config.json
+*.log
+*.tex
+data/
+models/
+**/logs/
+/tb/embeddings/
