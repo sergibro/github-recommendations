@@ -14,10 +14,10 @@ Hints:
 
 ## To run our pipeline
 1. Change `resources/config.template.json` to `resources/config.json` with your info;
-2. Run notebook;
-3. Download SQL dump you like (here we use `2019-06-01`) at `data/` folder and extract relationships tables (CSV): `followers.csv`, `watchers.csv`, `project_members.csv`; and metadata: `users.csv`, `projects.csv` to `data/%Y-%m-%d` folder (or change directories code dependencies at notebooks);
-4. View `tb/README` for more info about TensorBoard launch with your embeddings and metadata (docker based, but it is easy to run without it if needed);
+2. Download SQL dump you like (here we use `2019-06-01`) at `data/` folder and extract relationships tables (CSV): `followers.csv`, `watchers.csv`, `project_members.csv`; and metadata: `users.csv`, `projects.csv` to `data/%Y-%m-%d` folder (or change directories code dependencies at notebooks);
+3. Run notebook;
+4. View `tb/README.md` for more info about TensorBoard launch with prepared embeddings and metadata (docker based, but it is easy to run without it if needed);
 5. Modify code the way you like to find some new insights and share with us!
-s
+
 ---
 **Contacts**: https://t.me/sergibro

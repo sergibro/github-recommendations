@@ -11,7 +11,7 @@ def get_torchbiggraph_config():
 
         # Graph structure
         entities={
-            'all': {'num_partitions': 16},
+            'all': {'num_partitions': 4},
         },
         relations=[{
             'name': 'all_edges',
@@ -27,8 +27,8 @@ def get_torchbiggraph_config():
         comparator='dot',
 
         # Training
-        num_epochs=30,
-        num_uniform_negs=10,
+        num_epochs=10,
+        num_uniform_negs=100,
         loss_fn='softmax',
         lr=0.1,
 
