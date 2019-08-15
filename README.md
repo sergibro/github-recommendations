@@ -21,13 +21,16 @@ Data: http://ghtorrent.org/downloads.html
 4. View `tb/README.md` for more info about TensorBoard launch with prepared embeddings and metadata (docker based, but it is possible to run without it if needed);
 5. Modify code the way you like to find some new insights and share with us!
 
-## Visualisation
+## Demo
 Visualizations with different kind of tensors (embeddings) are available at TensorBoard:
 http://hel.sergibro.me:8002/#projector [hope not to forget to update if it moves]
 Hints:
 - open from desktop browser (it fetch hundreds of MB for larger tensors and computations done on the client side!);
 - for better visual experience run T-SNE instead of PCA for `500-1K` iterations on large tensors with `5-15` perplexity and learning rate set to `1` (from our experience); for smaller tensors you can play more due to fewer computations (but losing in data points);
 - you may choose feature to be colored by (language for repos, type for users, etc.)
+
+## How-to perform a search:
+![](resources/images/demo.gif)
 
 ---
 **Contacts**: https://t.me/sergibro
