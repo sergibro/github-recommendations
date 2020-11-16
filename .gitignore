@@ -1,7 +1,9 @@
-/resources/config.json
-*.log
-*.tex
-data/
-models/
+.idea/
+**/config.json
+**/*.log
+**/*.tex
+**/data/
+**/models/
+**/embeddings/
+**/index/
 **/logs/
-/tb/embeddings/

@@ -1,3 +1,3 @@
 #!/bin/bash
 cd "$(dirname $0)" || exit
-./run.sh 2
+./run.sh 3

@@ -1,0 +1,5 @@
+annoy==1.17.0
+Flask==1.1.2
+gunicorn==20.0.4
+pandas==1.1.4
+requests==2.25.0
