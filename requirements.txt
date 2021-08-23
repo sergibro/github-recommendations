@@ -3,7 +3,7 @@ gensim==3.6.0
 ipykernel==5.1.0
 ipython==7.5.0
 jupyter==1.0.0
-jupyterlab==0.35.5
+jupyterlab==1.2.21
 h5py==2.9.0
 Keras==2.2.4
 matplotlib==3.0.3
