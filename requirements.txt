@@ -1,7 +1,7 @@
 annoy==1.15.2
 gensim==3.6.0
 ipykernel==5.1.0
-ipython==7.5.0
+ipython==7.16.3
 jupyter==1.0.0
 jupyterlab==0.35.5
 h5py==2.9.0
