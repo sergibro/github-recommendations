@@ -1,2 +1,7 @@
 #!/bin/bash
-nohup wget -P data "http://ghtorrent-downloads.ewi.tudelft.nl/mysql/mysql-2019-06-01.tar.gz" > logs/downloads.out &
+
+DUMP_DATE=${1:-2020-07-17}
+URL="http://ghtorrent-downloads.ewi.tudelft.nl/mysql/mysql-$DUMP_DATE.tar.gz"
+echo $URL
+
+nohup wget -cP data $URL > logs/downloads_$DUMP_DATE.out &
