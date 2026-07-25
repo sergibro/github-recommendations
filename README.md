@@ -12,18 +12,33 @@ The goal of this project is to build GitHub repository search/recommender system
 ## Implemented ML solution
 It was decided to build graph nodes embeddings (`repo2vec` and `user2vec`) for the entire GitHub database using [PyTorch-BigGraph (PBG)](https://github.com/facebookresearch/PyTorch-BigGraph). On top of the embeddings representation, we have built query tool with the ranking engine.
 
-Data: http://ghtorrent.org/downloads.html
+Data: [GHTorrent](https://github.com/ghtorrent) MySQL dumps (`2019-06-01`, later `2021-03-06`).
+
+> **Note (2026):** GHTorrent is defunct — the download host no longer resolves and the
+> `ghtorrent.org` domain has changed hands, so the dumps can no longer be fetched.
+> [GH Archive](https://www.gharchive.org/) is the live alternative, but it has a different
+> schema, so the extraction stage would need reworking rather than repointing.
+> The published embeddings and the demo above are unaffected.
 
 ## To run our pipeline
 1. Change `resources/config.template.json` to `resources/config.json` with your info;
 2. Download SQL dump you like (here we use `2019-06-01`) at `data/` folder (run `db_download.sh` script (at terminal));
 3. Run `project_notebook.ipynb` notebook;
-4. View `tb/README.md` for more info about TensorBoard launch with prepared embeddings and metadata (docker based, but it is possible to run without it if needed);
+4. Export the embeddings for the projector and serve them as static files — see `tb/README.md`
+   (the old docker + TensorBoard 1.x setup it describes is superseded: the projector is a
+   client-side app, so plain static hosting of the tensors is enough);
 5. Modify code the way you like to find some new insights and share with us!
 
 ## Demo
-Visualizations with different kind of tensors (embeddings) are available at TensorBoard:
-http://hel.sergibro.me:8002/#projector [hope not to forget to update if it moves]
+Visualizations of the different tensors (embeddings) are available in the TensorFlow Embedding Projector:
+
+**https://projector.tensorflow.org/?config=https://tb-gh-recs.hel.sergibro.me/config.json**
+
+Four tensors are served: `repos_25k_gte1k` and `users_73k_gte500` (built from the
+`2021-03-06` dump), plus the original `repos_19k_gte1k` and `users_48k_gte100` from
+`2019-06-01` for comparison. The projector runs entirely in your browser; only the
+tensors and their metadata are fetched from our host.
+
 Hints:
 - open from desktop browser (it fetch hundreds of MB for larger tensors and computations done on the client side!);
 - for better visual experience run T-SNE instead of PCA for `500-1K` iterations on large tensors with `5-15` perplexity and learning rate set to `1` (from our experience); for smaller tensors you can play more due to fewer computations (but losing in data points);
