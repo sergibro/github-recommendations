@@ -1,0 +1,22 @@
+[project]
+name = "gh-recs-v2"
+version = "2.0.0.dev0"
+description = "GitHub interaction graph and embeddings, rebuilt on GH Archive"
+# Capped below 3.14: numba (via pecanpy) and gensim have no wheels for it yet.
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "duckdb>=1.1",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "pyarrow>=17",
+]
+
+[dependency-groups]
+# Kept out of the base install: only needed from M2 onwards.
+embed = [
+    "gensim>=4.3",
+    "pecanpy>=2.0",
+]
+
+[tool.uv]
+package = false

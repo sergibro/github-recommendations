@@ -7,3 +7,4 @@ models/
 /tb/embeddings/
 **/__pycache__/
 **/.ipynb_checkpoints/
+.venv/

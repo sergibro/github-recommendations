@@ -31,8 +31,14 @@ Three things the v1 line depended on are dead or frozen:
 
 ## Environment constraints
 
-- No sudo. `uv` installs to `~/.local/bin`; system python 3.14 has no `pip` and no
-  `venv` module (`python3.14-venv` is not installed).
+- No sudo. `uv` (0.11.32, in `~/.local/bin`) builds its own venvs and does not need the
+  missing `pip` / `venv` modules of the system python 3.14. `v2/pyproject.toml` pins
+  `>=3.12,<3.14`, because numba (under pecanpy) and gensim have no 3.14 wheels yet;
+  uv downloads a managed 3.13 for it.
+- Data lives outside the repo, in `~/data/gh-recs-v2/` (`raw/` hourly archives,
+  `graph/` parquet). ~500 GB free, 62 GB RAM, 12 cores.
+- GH Archive answers **403 to the default `Python-urllib` User-Agent**; `fetch.py`
+  sets its own.
 - Docker is available. The running `jup` container image
   (`quay.io/jupyter/pyspark-notebook`) has pandas 2.2.3 and is the fallback for
   anything pandas-shaped.
@@ -42,6 +48,46 @@ Three things the v1 line depended on are dead or frozen:
 - Live assets: `/srv/tb/embeddings` (data), `/srv/tb/{public,local}` (projector bundle).
 - Work happens on `dev`. Nothing lands on `main` without asking.
 
+## What the 2026 firehose actually looks like
+
+Measured on the fetched data, not assumed. Three findings that reshaped M1:
+
+**Payloads are trimmed.** A `PullRequestEvent`'s `payload.pull_request.base.repo`
+carries only `id`, `name` and `url` — no `language`, no `created_at`, no
+`stargazers_count`. Nothing else carries them either. So the v1 metadata columns
+(`language`, repo timestamps, user `location` / `country_code`, which came from
+GHTorrent's user and project tables) **cannot be reproduced from GH Archive at all.**
+v2 metadata is therefore derived from the events in the window: degree, event counts
+by type, first/last seen. Adding `language` back would need the GitHub REST API and a
+token — deferred, and it is a per-repo request, so it only makes sense for the core.
+
+**The event mix has collapsed towards pushes.** Sampling one hour per day across a
+week, 1.14M events:
+
+| share | event |
+| --- | --- |
+| 88.5% | PushEvent |
+| 6.5% | CreateEvent |
+| 3.3% | DeleteEvent |
+| 0.7% | PullRequestEvent |
+| **0.2%** | **WatchEvent** (a star) |
+| 0.03% | ForkEvent |
+
+In the 2019 data v1 was built on, stars were a large fraction of the stream. At ~250
+stars/hour they can no longer carry the graph, so v2 weights code contribution
+heavily — not because it is the better signal, but because it is what still exists.
+
+**Most push volume is noise.** In one hour, `github-actions[bot]` alone accounted for
+20k of 150k pushes, and 25,537 of 36,006 pushing accounts pushed exactly once. Two
+filters do most of the cleaning: drop bot logins, and drop pushes to the actor's *own*
+repository — those imply no shared interest and produce nearly every degree-1 node.
+
+**Consequence for the window.** One week (168 hours, 3.3 GiB) yields 355k edges but a
+2-core of only 4.2k users / 4.3k repos, against v1's 25k repos / 73k users; the 3-core
+collapses to 114 users. The window was therefore widened to ~12 weeks
+(2026-05-01 … 2026-07-23). The core grows faster than linearly with the window, since
+co-occurrence needs two interactions to fall inside the same window.
+
 ## Milestones
 
 ### M1 — environment and graph
@@ -49,12 +95,16 @@ Three things the v1 line depended on are dead or frozen:
 Install `uv`, create `pyproject.toml`, pull a bounded slice of GH Archive, build the
 user↔repo edge list in DuckDB.
 
-- Start with roughly a week of events, then decide whether to widen.
-- Keep only interaction events that imply interest: star (`WatchEvent`), fork, PR, push.
-- Filter to entities frequent enough to be meaningful, mirroring v1's `gte1k` / `gte500`
-  thresholds, so the result is comparable to the old tensors.
+Scripts: `v2/fetch.py` (download), `v2/build_graph.py` (stage → edges → k-core → nodes).
+
+- Keep only interaction events that imply interest, weighted by how much they imply it;
+  drop bots and own-repo pushes (see the section above).
+- v1's `gte1k` / `gte500` thresholds were star counts accumulated over years and have no
+  meaning in a 12-week window. The equivalent here is an **iterative k-core**: prune
+  until every user has ≥k repos and every repo ≥k users. That is the threshold that
+  matters for node2vec, since below it there is no co-occurrence to learn from.
 - **Done when:** node and edge counts are reported, with the degree distribution and the
-  chosen thresholds.
+  chosen k.
 
 ### M2 — baseline embeddings
 
