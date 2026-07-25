@@ -106,16 +106,47 @@ Scripts: `v2/fetch.py` (download), `v2/build_graph.py` (stage → edges → k-co
 - **Done when:** node and edge counts are reported, with the degree distribution and the
   chosen k.
 
+**Done.** 2026-05-01 … 2026-07-23, 2016 hourly files, 47 GiB, no gaps. After filtering:
+5,728,298 edges over 2.81M users and 3.41M repos. Cores:
+
+| k | users | repos | edges |
+| --- | --- | --- | --- |
+| 2 | 400,230 | 298,221 | 1,464,681 |
+| 3 | 120,901 | 69,564 | 643,200 |
+| **4** | **50,582** | **25,905** | **346,460** |
+| 5 | 24,705 | 12,154 | 204,556 |
+| 6 | 13,241 | 6,577 | 126,495 |
+
+**k = 4 is the published core**, because it lands almost exactly on v1's dimensions
+(25,905 repos against v1's 24,963) — the two eras are then the same size in the
+projector and can be compared without arguing about scale. 99.7% of its edges point at
+a repository the user does not own.
+
 ### M2 — baseline embeddings
 
 Train node2vec on that graph; produce repo and user tensors as pandas pickles in the
 same shape `convert.py` expects (an `embeddings` column plus metadata columns).
 
-- Metadata for repos: full name, language, timestamps. For users: login, plus whatever
-  the events carry.
+- Metadata is whatever the window yields: degree, per-type event counts, first/last seen.
+  Language and repo timestamps are not available (see above).
 - **Done when:** pickles exist and spot-checked nearest neighbours are sane — the v1
   README's own example is the reference: querying `apache/spark` should surface other
   Apache infrastructure projects.
+
+**Done.** `walk.py` + `embed.py`: 764,870 walks of length 80 in 19s, skip-gram over them
+in 478s on 12 cores, 100 dimensions to match v1. `apache/spark` returns
+`apache/parquet-java`, `apache/spark-docker`, `apache/iceberg-cpp`, `apache/hadoop`,
+`apache/gluten` — the reference example reproduces.
+
+One caveat worth keeping in view. Because the graph is now contribution-driven rather
+than star-driven, part of what it learns is *who works together* rather than *what is
+worth looking at next*: for 23.5% of repositories all five nearest neighbours share the
+same owner. It is not the whole picture — 57.7% have no same-owner repo in their top
+five, and cross-organisation neighbourhoods are clearly thematic (`duckdb/duckdb` →
+`apache/iceberg-rust`, `Eventual-Inc/Daft`, `trinodb/trino`, `ray-project/ray`) — but
+large monorepo organisations do collapse into tight same-owner balls. Weighting stars
+and forks higher cannot fix this while stars are 0.2% of the stream; a co-occurrence
+prior that discounts same-owner edges would be the thing to try.
 
 ### M3 — publish
 
@@ -124,6 +155,13 @@ alongside the four v1 tensors, verify end to end.
 
 - **Done when:** the public projector URL shows both eras, every asset returns 200 with
   CORS, and the old tensors still work.
+
+**Staged, not published.** Running `convert.py` over all six pickles at once regenerates
+the four v1 tensors **byte-identically** to what is live, which is the proof that the
+export path is reproducible and that publishing cannot corrupt v1. The new assets are
+10.4 MB (`repos_25k_v2`) and 20.2 MB (`users_50k_v2`). Copying them into
+`/srv/tb/embeddings` is what makes them public, so it waits for a decision — along with
+whether v2 or v1 should be the tensor the projector opens on.
 
 ### Later — not scoped yet
 
