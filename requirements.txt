@@ -18,4 +18,4 @@ scipy==1.2.1
 tensorboard==1.13.1
 tensorflow==1.15.4
 torchbiggraph==1.dev1
-tqdm==4.31.1
+tqdm==4.66.3
