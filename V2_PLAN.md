@@ -156,12 +156,27 @@ alongside the four v1 tensors, verify end to end.
 - **Done when:** the public projector URL shows both eras, every asset returns 200 with
   CORS, and the old tensors still work.
 
-**Staged, not published.** Running `convert.py` over all six pickles at once regenerates
-the four v1 tensors **byte-identically** to what is live, which is the proof that the
-export path is reproducible and that publishing cannot corrupt v1. The new assets are
-10.4 MB (`repos_25k_v2`) and 20.2 MB (`users_50k_v2`). Copying them into
-`/srv/tb/embeddings` is what makes them public, so it waits for a decision — along with
-whether v2 or v1 should be the tensor the projector opens on.
+**On the private host, deliberately not public yet.** Running `convert.py` over all six
+pickles at once regenerates the four v1 tensors **byte-identically** to what is live —
+the proof that the export path is reproducible and that publishing cannot corrupt v1.
+
+The v2 assets went to `/srv/tb/local/`, not `/srv/tb/embeddings/`. That distinction is
+the whole point: `/srv/tb/embeddings` is the *public* data host, so anything placed
+there is world-readable regardless of which front end links it. `/srv/tb/local` is
+behind `basic_auth`, and since the projector bundle is served from the same host, the
+page and its tensors share an origin and need no CORS.
+
+    https://tb-local.hel.sergibro.me/?config=https://tb-local.hel.sergibro.me/config_v2.json
+
+`config_v2.json` lists all six tensors, `repos_25k_v2` first: the two v2 ones point at
+`tb-local`, the four v1 ones stay on the public data host, which its `*` CORS header
+allows the private page to fetch. Verified: v2 returns 401 unauthenticated and 404 on
+the public host, every v1 asset still returns 200 with CORS, and the public
+`config.json` still lists exactly the original four.
+
+To publish later: copy the four `*_v2.*` files into `/srv/tb/embeddings/`, regenerate
+`config.json` there with `--base-url https://tb-gh-recs.hel.sergibro.me`, and update the
+README link.
 
 ### Later — not scoped yet
 
