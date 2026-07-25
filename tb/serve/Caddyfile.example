@@ -1,0 +1,50 @@
+# Serving the Embedding Projector as static files.
+#
+# Three hosts, each with one job:
+#   1. the data      -- tensors + metadata + manifest, fetched cross-origin
+#   2. a public app  -- the projector bundle, open to everyone
+#   3. a private app -- the same bundle behind a password
+#
+# The projector is entirely client-side, so nothing here runs code: no TensorFlow,
+# no TensorBoard, no application server. Replace the hostnames with your own.
+
+# --- 1. data -------------------------------------------------------------------
+# CORS lives here and only here: this is the origin the browser fetches data
+# *from*, while the page it runs on is one of the app hosts below. "*" is safe
+# because this host serves public, read-only files and carries no credentials --
+# do not add auth here, or the public demo breaks.
+tb-gh-recs.example.com {
+	root * /srv/tb/embeddings
+	encode zstd gzip
+	header Access-Control-Allow-Origin "*"
+
+	# Tensors are immutable (new data means new filenames), the manifest is not.
+	@data path *.bytes *.tsv
+	header @data Cache-Control "public, max-age=31536000, immutable"
+	@manifest path *.json
+	header @manifest Cache-Control "no-cache"
+
+	file_server
+}
+
+# --- 2. public app -------------------------------------------------------------
+# Serves the projector bundle. No CORS header: this host hands out the page, not
+# the data it fetches.
+tb.example.com {
+	root * /srv/tb/public
+	encode zstd gzip
+	file_server
+}
+
+# --- 3. private app ------------------------------------------------------------
+# Same bundle, password-protected -- useful as a copy that does not depend on
+# projector.tensorflow.org staying up.
+tb-local.example.com {
+	basic_auth {
+		# generate with: caddy hash-password
+		youruser REPLACE_WITH_BCRYPT_HASH
+	}
+	root * /srv/tb/local
+	encode zstd gzip
+	file_server
+}
