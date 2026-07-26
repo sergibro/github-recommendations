@@ -166,7 +166,11 @@ there is world-readable regardless of which front end links it. `/srv/tb/local` 
 behind `basic_auth`, and since the projector bundle is served from the same host, the
 page and its tensors share an origin and need no CORS.
 
-    https://tb-local.hel.sergibro.me/?config=https://tb-local.hel.sergibro.me/config_v2.json
+    https://tb-local.hel.sergibro.me/
+
+The bundle in `/srv/tb/local` has its baked-in default config path repointed at
+`config_v2.json`, so the bare URL is enough; `?config=` still overrides it. The public
+bundle in `/srv/tb/public` is untouched and still defaults to the public manifest.
 
 `config_v2.json` lists all six tensors, `repos_25k_v2` first: the two v2 ones point at
 `tb-local`, the four v1 ones stay on the public data host, which its `*` CORS header
