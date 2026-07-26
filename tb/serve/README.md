@@ -69,3 +69,38 @@ curl -s -o /dev/null -w "%{http_code} %header{access-control-allow-origin}\n" \
 Then open the page and check that the tensor list is populated and points render;
 large tensors take a while, since the whole file is fetched before anything is
 drawn and the projection is computed client-side.
+
+## Raising the sampling limits
+
+"For faster results, the data will be sampled down to 10,000 points" is not a
+limit on what is *displayed* -- every point is loaded and rendered. It caps what
+the expensive projections are computed over: t-SNE and UMAP give coordinates only
+to the first N points of a shuffled order, so the rest drop out of those two
+views. PCA is different -- it samples only to compute the components, then
+projects everything.
+
+The three sizes are compiled into the bundle as constants:
+
+```js
+a.TSNE_SAMPLE_SIZE=1E4;a.UMAP_SAMPLE_SIZE=5E3;a.PCA_SAMPLE_SIZE=5E4;a.PCA_SAMPLE_DIM=200
+```
+
+Rather than hard-coding different numbers, they can be made overridable from the
+query string, keeping the current values as defaults:
+
+```js
+var _sp=new URLSearchParams(location.search);
+a.TSNE_SAMPLE_SIZE=+_sp.get("tsne")||1E4;a.UMAP_SAMPLE_SIZE=+_sp.get("umap")||5E3;
+a.PCA_SAMPLE_SIZE=+_sp.get("pca")||5E4;a.PCA_SAMPLE_DIM=+_sp.get("pcadim")||200
+```
+
+An absent or unparseable value falls back to the default, and the labels in the
+UI update on their own, since they read the same constants. Then:
+
+```
+https://tb.example.com/?tsne=30000&umap=15000
+```
+
+Worth doing on a private front end, and worth thinking twice about on a public
+one: t-SNE and UMAP run in the browser, so a large value on a weak device reads
+as a hung tab rather than as a slow projection.
