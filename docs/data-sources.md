@@ -96,12 +96,21 @@ Two further caveats: the dataset is built from GH Archive Create and PullRequest
 **repositories with no pull request activity are absent**, and it is a static snapshot
 through **2025-07-23**.
 
-**ecosyste.ms** (repos.ecosyste.ms) returns exactly the right fields — language, stars,
-forks, `created_at`, topics, description, licence — confirmed by a live lookup. But it is
-**API-only**: there is no bulk dump short of a paid custom export, and its published rate
-limits contradict each other (a 2025-12 blog post says 5,000–15,000/hour, the current
-pricing page says 300–5,000/hour). Data is CC BY-SA 4.0. Worth measuring the real limit
-before planning around it.
+**ecosyste.ms** (repos.ecosyste.ms) is what `v2/enrich.py` uses. It returns exactly the
+right fields — `language`, `stargazers_count`, `created_at`, `topics`, description,
+licence — with no key, at roughly 0.15 s per request. API-only: no bulk dump short of a
+paid custom export. Data is CC BY-SA 4.0. Its published rate limits contradict each other
+(a 2025-12 blog post says 5,000–15,000/hour, the pricing page says 300–5,000/hour), so
+`enrich.py` uses four workers and is resumable rather than trusting either figure.
+
+**deps.dev is not a substitute**, which is worth stating because the field list is not
+documented anywhere prominent. Queried directly on 2026-08-29, a project record has
+exactly seven fields:
+
+    description, forksCount, homepage, license, openIssuesCount, projectKey, starsCount
+
+No `language`, no `created_at`, no topics. Free and anonymous and fast, but it can only
+supply star and fork counts.
 
 **CNCF DevStats** does publish a genuine bulk dump — a 17 GB Postgres `gha.dump`,
 last-modified 2026-08-25 — but it covers only the 256 CNCF projects.
@@ -136,6 +145,52 @@ to exceed rate limits.
 `Projects` table carrying star count, fork count, open issues and description. Repo
 creation date and topics were not confirmed present. Worth checking as a no-credentials
 partial substitute.
+
+## GHTorrent survives on archive.org, up to 2018
+
+The most useful find, and the only source that still carries **edge-level** star data
+rather than aggregate counts. Someone uploaded 35 working monthly GHTorrent MySQL dumps to
+the Internet Archive between 2019 and 2022 — a rescue upload, not an official backup.
+Identifiers follow `ghtorrent-YYYYMMDD`; archive.org's free-text search does not surface
+them, but `advancedsearch.php?q=identifier:ghtorrent-*` does.
+
+- Coverage **2013-10-12 → 2018-03-01**, with gaps. 4.31 GB (the earliest) to 74.5 GB.
+- Verified live: `archive.org/download/ghtorrent-20180101/ghtorrent-2018-01-01.tar.gz`
+  returns 200 with `content-length: 71,446,490,168` and accepts ranges. Each item also
+  carries a generated `.torrent`.
+- CC BY-NC-SA 4.0. CSV per table inside a `.tar.gz`.
+- The schema is the one v1 was built on: `projects` (`language`, `created_at`),
+  `project_languages`, `project_topics`, and — the part nothing modern offers — the
+  `watchers` table, which is the genuine **user→repository star edge list**, plus
+  `followers` for user→user edges.
+
+The gap: GHTorrent's own download page, preserved by the Wayback Machine on 2019-12-31,
+names TU Delft as its only host ever, and `ghtorrent-downloads.ewi.tudelft.nl` now fails
+DNS resolution outright. Its last published dump was `mysql-2019-06-01` (~103 GB). So
+**2018-05 through 2019-06 exists on no live host** and looks unrecoverable.
+
+This is what makes an honest era comparison possible: build a 2018 graph from a dump with
+the same pipeline, rather than comparing a healthy old snapshot against a degraded current
+one.
+
+Two channels remain unchecked because automation cannot reach them —
+**academictorrents.com** serves a JavaScript anti-bot challenge, and **figshare** returns
+403 to both its API and its search. Both need a human with a browser.
+
+## Measured against our own data
+
+Coverage of the 25,893 repositories in the k=4 core, computed 2026-08-29 rather than taken
+from any dataset's own claims:
+
+| Source | Snapshot | Core covered |
+| --- | --- | --- |
+| ecosyste.ms API | live | ~92% (running; see `v2/enrich.py`) |
+| Zenodo 10149481 | 2023-11-17 | **26.7%** (6,915 of 25,893) |
+
+The Zenodo number is the useful lesson: 3.27M repositories sounds like plenty, but a 2023
+snapshot simply does not know the repositories that are active in 2026. Any static dump
+will decay the same way against a recency-weighted graph — which is an argument for a live
+API over a bulk file, exactly opposite to the instinct that started this search.
 
 ## Ruled out
 
