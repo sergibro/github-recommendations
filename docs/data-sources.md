@@ -25,6 +25,12 @@ Separately, `WatchEvent` capture fell from 90–100% before 2025-06 to 10–20% 
 measured against the stargazers REST API. **No published explanation exists**
 ([#320](https://github.com/igrigorik/gharchive.org/issues/320)).
 
+That last one is independently corroborated by someone with a stake in it being wrong:
+**OSS Insight merged a change on 2026-08-19 disabling its star rankings outright**, on the
+grounds that `WatchEvent`'s share of GH Archive fell from 2.96% to 0.22% between 2025-06
+and 2026-08. Our own sampling of 2026-05-01 … 2026-07-23 measured 0.2%, arrived at
+independently — so this is not a local artefact.
+
 GH Archive itself is effectively unmaintained: no crawler code merged since 2025-05-25,
 its maintainer unresponsive to a 2026-08-11 ping. Treat its output as a lower bound.
 
@@ -79,6 +85,16 @@ That is the v1 metadata set recovered — `language`, `created_at` and a star co
 plain file read, with no credentials, no rate limit and no per-repository requests. Two
 caveats: it is built from GH Archive Create and PullRequest events, so **repositories with
 no pull request activity are absent**, and it is a static snapshot through **2025-07-23**.
+
+**ecosyste.ms** (repos.ecosyste.ms) returns exactly the right fields — language, stars,
+forks, `created_at`, topics, description, licence — confirmed by a live lookup. But it is
+**API-only**: there is no bulk dump short of a paid custom export, and its published rate
+limits contradict each other (a 2025-12 blog post says 5,000–15,000/hour, the current
+pricing page says 300–5,000/hour). Data is CC BY-SA 4.0. Worth measuring the real limit
+before planning around it.
+
+**CNCF DevStats** does publish a genuine bulk dump — a 17 GB Postgres `gha.dump`,
+last-modified 2026-08-25 — but it covers only the 256 CNCF projects.
 
 **SEART GitHub Search** (seart-ghs.si.usi.ch, MIT) is the natural cross-check: 1,978,810
 repositories, but only those with ≥10 stars, and 25 fields including topics, contributors
