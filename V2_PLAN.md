@@ -1,6 +1,6 @@
 # v2 — modernization plan
 
-Working document for the v2 line. Lives on `dev`. Written 2026-07-25.
+Working document for the v2 line. Lives on `dev`. Written 2026-07-25, last updated 2026-08-28.
 
 Everything before it is preserved and immutable: `v1.0-ucu` (2019 university project),
 `v1.1` (2020–2022 continuation), then untagged 2026 commits that restored the demo and
@@ -33,16 +33,15 @@ Three things the v1 line depended on are dead or frozen:
 
 - No sudo. `uv` (0.11.32, in `~/.local/bin`) builds its own venvs and does not need the
   missing `pip` / `venv` modules of the system python 3.14. `v2/pyproject.toml` pins
-  `>=3.12,<3.14`, because numba (under pecanpy) and gensim have no 3.14 wheels yet;
-  uv downloads a managed 3.13 for it.
+  `>=3.12,<3.14`, because gensim has no 3.14 wheels yet; uv downloads a managed 3.13.
 - Data lives outside the repo, in `~/data/gh-recs-v2/` (`raw/` hourly archives,
-  `graph/` parquet). ~500 GB free, 62 GB RAM, 12 cores.
+  `graph/` parquet). 62 GB RAM, 12 cores; 460 GB free as of 2026-07-25, after the
+  47 GiB of archives had landed.
 - GH Archive answers **403 to the default `Python-urllib` User-Agent**; `fetch.py`
   sets its own.
 - Docker is available. The running `jup` container image
   (`quay.io/jupyter/pyspark-notebook`) has pandas 2.2.3 and is the fallback for
   anything pandas-shaped.
-- 863 GB free on `/`.
 - Old v1 pickles, for comparison:
   `/home/sbro/hetzner-opt-home/ucu/github-recommendations/tb/embeddings/`
 - Live assets: `/srv/tb/embeddings` (data), `/srv/tb/{public,local}` (projector bundle).
@@ -186,13 +185,19 @@ README link.
 ### Later — not scoped yet
 
 GraphSAGE with text features (inductive: new repos without a full retrain), possibly
-LightGCN if the framing becomes recommendation rather than exploration; migrating the
-viewer to Apple's Embedding Atlas for WebGPU-scale rendering; reviving the nearest
-neighbour API on a modern stack (FastAPI + hnswlib/FAISS) from the legacy branch.
+LightGCN if the framing becomes recommendation rather than exploration; reviving the
+nearest neighbour API on a modern stack (FastAPI + hnswlib/FAISS) from the legacy branch.
+
+On the viewer, `docs/viewers.md` surveys the alternatives (verified 2026-07-26) and
+concludes we should keep the current one: what stalls at 25k points is the *projection*,
+computed in the browser, not the rendering. Computing UMAP offline into three dimensions
+and publishing it as an ordinary extra tensor gives instant, unsampled, fully 3D views
+with no new infrastructure. Embedding Atlas would be a real gain for cross-filtering over
+metadata columns, but it is 2D only.
 
 ## Budget
 
 The user's subscription usage is **not visible to me** — `/usage` is a client-side
 command with no tool behind it. Pacing therefore works by checkpoint: stop at each
 milestone, report, let the user check `/usage` and decide the next scope. As of
-2026-07-25 the weekly allowance was at 50%, resetting Jul 28.
+2026-07-25 the weekly allowance was at 50%, resetting 2026-07-28.
