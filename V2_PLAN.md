@@ -76,6 +76,31 @@ In the 2019 data v1 was built on, stars were a large fraction of the stream. At 
 stars/hour they can no longer carry the graph, so v2 weights code contribution
 heavily — not because it is the better signal, but because it is what still exists.
 
+**Correction, established 2026-08-28.** The paragraph above describes what GH Archive
+*delivers*, and it was wrong to present that as what GitHub *emits*. Three separate
+causes, only one of which is GitHub policy:
+
+1. **Payload trimming — official and deliberate.** Announced 2025-08-08, brownout
+   2025-09-08, rolled out 2025-10-07: GitHub removed fields from pull request and push
+   events that "are slow to generate and require costly database calls." This is the
+   real, permanent explanation for the missing `language` / `created_at` above.
+2. **A caching bug on GitHub's side.** Daily events fell from 2,769,429 on 2025-10-08 to
+   18,906 on 2025-10-09. GitHub Support confirmed it: "recent changes did introduce a
+   cache for event data, which unexpectedly led to some users seeing 'stale' events."
+   Volume partly recovered from 2025-10-14 but never to the old baseline.
+3. **A bug in GH Archive's own crawler.** It fetches a single page of `/events` per
+   cycle where the API offers up to 300 events over 100-per-page pages, so it captures
+   roughly a third to a fifth of what is available. The fix has sat in an unmerged pull
+   request since **2026-02-19** on a project its own contributors now describe as
+   unmaintained.
+
+Separately, the collapse specific to `WatchEvent` (90–100% capture until 2025-06, 10–20%
+from 2026-02) has **no published explanation** from GitHub or anyone else.
+
+So the graph in M1 rests on systematically undercounted data. That is a property of the
+source, not of our pipeline, and it means the event mix above should be read as a lower
+bound. See `docs/data-sources.md`.
+
 **Most push volume is noise.** In one hour, `github-actions[bot]` alone accounted for
 20k of 150k pushes, and 25,537 of 36,006 pushing accounts pushed exactly once. Two
 filters do most of the cleaning: drop bot logins, and drop pushes to the actor's *own*
