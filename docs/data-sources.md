@@ -74,17 +74,27 @@ emitting. Not verified either way; would need a credentialed session to settle.
 
 ## (b) Repository metadata
 
-**`ibragim-bad/github-repos-metadata-40M` on Hugging Face — and it needs no token at all.**
-41,058,194 repositories, 2.3 GB of Parquet, MIT licence, no login. Schema verified against
-the live dataset on 2026-08-28 with DuckDB reading `hf://` directly:
+**`ibragim-bad/github-repos-metadata-40M` on Hugging Face.**
+41,058,194 repositories, 2.3 GB of Parquet across six files, MIT licence. Schema verified
+against the live dataset on 2026-08-28 with DuckDB reading `hf://` directly:
 
     repo_name, language, created_at, description, description_language,
     description_language_score, license_key, forks_count, watchers_count, size, last_pr_id
 
-That is the v1 metadata set recovered — `language`, `created_at` and a star count — from a
-plain file read, with no credentials, no rate limit and no per-repository requests. Two
-caveats: it is built from GH Archive Create and PullRequest events, so **repositories with
-no pull request activity are absent**, and it is a static snapshot through **2025-07-23**.
+That is the v1 metadata set recovered — `language`, `created_at` and a star count — in one
+file read rather than 25,905 API calls.
+
+**It does need a Hugging Face token in practice**, which is worth stating precisely
+because it is easy to get wrong. Reading the *schema* anonymously works. Pulling the
+*files* does not: Hugging Face rate-limits by IP and answers with a plain-text body —
+`"We had to rate limit your IP ... create a HF account or login ... and make sure you
+pass a HF_TOKEN"` — which `curl` will happily save as a 196-byte "parquet" file unless the
+download is size-checked. A free read-only HF token lifts it. This is a much lighter
+credential than a GitHub PAT or a Google Cloud login, but it is not nothing.
+
+Two further caveats: the dataset is built from GH Archive Create and PullRequest events, so
+**repositories with no pull request activity are absent**, and it is a static snapshot
+through **2025-07-23**.
 
 **ecosyste.ms** (repos.ecosyste.ms) returns exactly the right fields — language, stars,
 forks, `created_at`, topics, description, licence — confirmed by a live lookup. But it is
