@@ -79,6 +79,10 @@ def main():
     p.add_argument('--window', type=int, default=10)
     p.add_argument('--epochs', type=int, default=5)
     p.add_argument('--workers', type=int, default=os.cpu_count())
+    # The seed fixes the walks exactly. It does not make training reproducible:
+    # gensim's workers consume the corpus in whatever order they get it, so
+    # similarities move in the third decimal between runs. Neighbour sets are
+    # stable; exact scores are not.
     p.add_argument('--seed', type=int, default=42)
     args = p.parse_args()
 
