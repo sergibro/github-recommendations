@@ -106,6 +106,15 @@ def main():
                                      (repos, len(users), 'url', 'repos')):
         path = os.path.join(graph_dir, f'nodes_{side}.parquet').replace("'", "''")
         meta = con.execute(f"SELECT * FROM read_parquet('{path}')").df()
+        # Repository attributes are not in the event stream any more, so if
+        # enrich.py has fetched them, fold them in here. Left join: a repo the
+        # API did not know still gets its vector, just with empty columns.
+        extra = os.path.join(graph_dir, 'repo_meta.parquet')
+        if side == 'repos' and os.path.exists(extra):
+            m = pd.read_parquet(extra).rename(columns={'repo': key})
+            m = m.drop(columns=[c for c in m.columns if c in meta.columns and c != key])
+            meta = meta.merge(m, on=key, how='left')
+            print(f'joined {len(m):,} rows of fetched metadata')
         df = to_frame(names, offset, model.wv, meta, key)
         name = f'{side}_{len(df) // 1000}k_v2'
         df.to_pickle(os.path.join(out_dir, f'{name}.pkl'))
