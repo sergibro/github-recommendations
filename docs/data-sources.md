@@ -182,15 +182,32 @@ Two channels remain unchecked because automation cannot reach them —
 Coverage of the 25,893 repositories in the k=4 core, computed 2026-08-29 rather than taken
 from any dataset's own claims:
 
-| Source | Snapshot | Core covered |
-| --- | --- | --- |
-| ecosyste.ms API | live | ~92% (running; see `v2/enrich.py`) |
-| Zenodo 10149481 | 2023-11-17 | **26.7%** (6,915 of 25,893) |
+| Source | Snapshot | Rows | Core covered |
+| --- | --- | --- | --- |
+| **ecosyste.ms API** | live | — | **88.3%** (22,874) |
+| HF `github-repos-metadata-40M` | 2025-07-23 | 40,058,194 | 48.6% (12,574) |
+| Zenodo 10149481 | 2023-11-17 | 3,274,587 | 26.7% (6,915) |
+| ecosyste.ms ∪ Hugging Face | | | **92.0%** |
 
-The Zenodo number is the useful lesson: 3.27M repositories sounds like plenty, but a 2023
-snapshot simply does not know the repositories that are active in 2026. Any static dump
-will decay the same way against a recency-weighted graph — which is an argument for a live
-API over a bulk file, exactly opposite to the instinct that started this search.
+Two things fall out of this. First, coverage tracks **snapshot age**, not dataset size:
+Zenodo offers 3.27M repositories and reaches a quarter of ours, because 11,672 of our core
+repositories were created in 2025 or 2026 and no 2023 file can know them. Any static dump
+decays the same way against a recency-weighted graph — an argument for a live API over a
+bulk file, which is the opposite of the instinct that started this search.
+
+Second, the sources fail differently rather than redundantly: Hugging Face holds 956
+repositories ecosyste.ms had never indexed, so the union beats either alone. Where the
+enrichment lands, on the 22,874 ecosyste.ms rows: `created_at` and `stargazers_count` for
+100%, `language` for 94.1%, `topics` for 56.8%.
+
+A note on cost, since the estimate was wrong by an order of magnitude: single lookups
+against ecosyste.ms return in ~0.15 s, which suggested about 15 minutes for the full set on
+four workers. It actually took **4 hours** — sustained throughput is nothing like the
+single-shot latency. Budget accordingly, and keep the run resumable.
+
+The Hugging Face shards *can* be pulled anonymously after all, contrary to what the
+rate-limit message implies — but only slowly: six sequential requests five minutes apart
+succeeded where a tight loop and DuckDB's range reads were both refused.
 
 ## Ruled out
 
