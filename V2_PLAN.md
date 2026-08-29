@@ -207,6 +207,44 @@ To publish later: copy the four `*_v2.*` files into `/srv/tb/embeddings/`, regen
 `config.json` there with `--base-url https://tb-gh-recs.hel.sergibro.me`, and update the
 README link.
 
+### M4 — metadata recovered
+
+**Done 2026-08-29.** GitHub's payload trim removed `language` and `created_at` from the
+event stream, so they were fetched separately — `v2/enrich.py`, against ecosyste.ms, no
+credentials. Coverage of the core: **24,368 of 25,905 (94.1%)**, with `created_at` for
+99.6%, star counts for 99.9%, `language` for 94.2% and `topics` for 56.4%. `embed.py`
+left-joins the result, so the repository tensor now carries 23 metadata columns instead of
+nine and `language` is a colouring dimension again, as it was in v1.
+
+Two things learned the hard way, both recorded in `docs/data-sources.md`: sustained
+throughput bears no relation to single-request latency (0.15 s per lookup implied 15
+minutes; the run took 4 hours), and a second pass over the misses recovered 1,348 of
+3,031 — much of "not indexed" was transient refusal.
+
+### Next — decided, not started
+
+Four candidates, in no fixed order:
+
+- **A three-dimensional tensor.** Compute UMAP offline into 3 dimensions and publish it as
+  an ordinary extra tensor. The projector's PCA view of 3-dimensional data is just a
+  rotation of coordinates that are already correct, so it renders instantly, shows every
+  point with no sampling, and keeps full 3D orbit. This is the cheapest real improvement
+  available: no new viewer, no new infrastructure, no change to `convert.py`. See
+  `docs/viewers.md` for why replacing the viewer is the wrong move.
+- **An honest comparison of eras.** 35 monthly GHTorrent MySQL dumps survive on
+  archive.org (2013-10 to 2018-03, verified downloadable; see `docs/data-sources.md`).
+  Building a 2018 graph with this same pipeline would compare v1's era against v2's on
+  data of equal quality, instead of comparing a healthy snapshot against a degraded one.
+  ~71 GB for one month.
+- **A penalty on same-owner edges.** For 23.5% of repositories all five nearest neighbours
+  share an owner, because a contribution-driven graph partly learns who works together
+  rather than what is worth looking at. Discounting co-occurrence inside one organisation
+  is the obvious thing to try; weighting stars higher cannot work while they are 0.2% of
+  the stream.
+- **A wider window.** `open-index/open-github` mirrors the whole event stream as Parquet,
+  queryable in place, so a year or two would cost no more effort than the current twelve
+  weeks — and the core grows faster than linearly with the window.
+
 ### Later — not scoped yet
 
 GraphSAGE with text features (inductive: new repos without a full retrain), possibly

@@ -14,11 +14,21 @@ It was decided to build graph nodes embeddings (`repo2vec` and `user2vec`) for t
 
 Data: [GHTorrent](https://github.com/ghtorrent) MySQL dumps (`2019-06-01`, later `2021-03-06`).
 
-> **Note (2026):** GHTorrent is defunct — the download host no longer resolves and the
-> `ghtorrent.org` domain has changed hands, so the dumps can no longer be fetched.
-> [GH Archive](https://www.gharchive.org/) is the live alternative, but it has a different
-> schema, so the extraction stage would need reworking rather than repointing.
-> The published embeddings and the demo above are unaffected.
+> **Note (2026-08):** GHTorrent is defunct — its download host no longer resolves and the
+> `ghtorrent.org` domain has changed hands. Monthly dumps from 2013-10 to 2018-03 do
+> survive on the Internet Archive; anything after that is gone.
+> [GH Archive](https://www.gharchive.org/) is the live alternative, but it is not a drop-in
+> replacement: GitHub trimmed its event payloads in October 2025, so repository `language`
+> and timestamps are no longer in the stream at all and have to be fetched separately.
+> `docs/data-sources.md` records what is still available and what each source actually
+> covers. The published embeddings and the demo above are unaffected.
+
+## v2
+
+Work on a rebuilt pipeline lives on the `dev` branch: `V2_PLAN.md` for the plan and
+findings, `v2/` for the code (GH Archive → DuckDB graph → node2vec → metadata enrichment),
+and `docs/` for two dated surveys — of embedding viewers, and of where GitHub activity data
+can still be got.
 
 ## To run our pipeline
 1. Change `resources/config.template.json` to `resources/config.json` with your info;
