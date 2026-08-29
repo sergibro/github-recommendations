@@ -184,10 +184,14 @@ from any dataset's own claims:
 
 | Source | Snapshot | Rows | Core covered |
 | --- | --- | --- | --- |
-| **ecosyste.ms API** | live | — | **88.3%** (22,874) |
+| ecosyste.ms API, first pass | live | — | 88.3% (22,874) |
 | HF `github-repos-metadata-40M` | 2025-07-23 | 40,058,194 | 48.6% (12,574) |
 | Zenodo 10149481 | 2023-11-17 | 3,274,587 | 26.7% (6,915) |
-| ecosyste.ms ∪ Hugging Face | | | **92.0%** |
+| **ecosyste.ms retried, then filled from HF** | | | **94.1%** (24,368) |
+
+Re-running the API over its own misses recovered 1,348 of 3,031 — so a good part of what
+looked like "not indexed" was transient refusal under load. Worth a second pass before
+concluding a repository is unknown. The static dump then filled 146 more.
 
 Two things fall out of this. First, coverage tracks **snapshot age**, not dataset size:
 Zenodo offers 3.27M repositories and reaches a quarter of ours, because 11,672 of our core
