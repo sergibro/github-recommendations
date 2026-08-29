@@ -82,11 +82,42 @@ def run(repo, total):
     return row
 
 
+# Columns of the Hugging Face `ibragim-bad/github-repos-metadata-40M` dump, mapped
+# onto ours. It is a static snapshot (through 2025-07-23) and so covers less than
+# the live API, but it is not a subset of it: it holds repositories ecosyste.ms
+# never indexed, so it is worth using to fill the gaps rather than as a source.
+FILL_MAP = {'repo_name': 'repo', 'language': 'language', 'created_at': 'created_at',
+            'description': 'description', 'license_key': 'license',
+            'forks_count': 'forks_count', 'watchers_count': 'stargazers_count',
+            'size': 'size'}
+
+
+def fill_from(df, path, repos):
+    """Add rows for repositories the API did not know, from a local parquet."""
+    con = duckdb.connect()
+    cols = ', '.join(f'{src} AS {dst}' for src, dst in FILL_MAP.items())
+    glob = os.path.join(os.path.expanduser(path), '*.parquet').replace("'", "''")
+    extra = con.execute(f"SELECT {cols} FROM read_parquet('{glob}')").df()
+
+    known = set(df['repo'].str.lower()) if len(df) else set()
+    wanted = {r.lower(): r for r in repos if r.lower() not in known}
+    extra['_k'] = extra['repo'].str.lower()
+    extra = extra[extra['_k'].isin(wanted)].drop_duplicates('_k')
+    # Keep the graph's own spelling of the name, not the dump's.
+    extra['repo'] = extra['_k'].map(wanted)
+    extra = extra.drop(columns=['_k'])
+    print(f'filled {len(extra):,} repositories the API did not have')
+    return pd.concat([df, extra], ignore_index=True) if len(df) else extra
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--graph', required=True)
     p.add_argument('--out', required=True)
+    p.add_argument('--fill-from', default='',
+                   help='directory of parquet shards of the Hugging Face metadata '
+                        'dump, used only for repositories the API did not return')
     p.add_argument('--jobs', type=int, default=4,
                    help='kept low on purpose: the API is free and unmetered, '
                         'and there is no reason to be the one who ruins that')
@@ -115,9 +146,14 @@ def main():
         print(f'\nfetched {len(rows):,} in {time.time() - t:.0f}s '
               f'({_state["missing"]:,} not indexed)')
         df = pd.concat([have, pd.DataFrame(rows)], ignore_index=True) if len(have) else pd.DataFrame(rows)
-        df.to_parquet(out, index=False)
     else:
         df = have
+
+    all_repos = [r[0] for r in con.execute(
+        f"SELECT DISTINCT repo FROM read_parquet('{core}')").fetchall()]
+    if args.fill_from:
+        df = fill_from(df, args.fill_from, all_repos)
+    df.to_parquet(out, index=False)
 
     total = con.execute(f"SELECT count(DISTINCT repo) FROM read_parquet('{core}')").fetchone()[0]
     print(f'\n{len(df):,} / {total:,} repositories = {100 * len(df) / total:.1f}% covered')
