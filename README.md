@@ -42,7 +42,7 @@ can still be got.
 ## Demo
 Visualizations of the different tensors (embeddings) are available in the TensorFlow Embedding Projector:
 
-**https://projector.tensorflow.org/?config=https://tb-gh-recs.hel.sergibro.me/config.json**
+**https://projector.tensorflow.org/?config=https://tb-gh-recs.op0.cc/config.json**
 
 Four tensors are served: `repos_25k_gte1k` and `users_73k_gte500` (built from the
 `2021-03-06` dump), plus the original `repos_19k_gte1k` and `users_48k_gte100` from

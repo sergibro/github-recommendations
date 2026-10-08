@@ -190,21 +190,23 @@ there is world-readable regardless of which front end links it. `/srv/tb/local` 
 behind `basic_auth`, and since the projector bundle is served from the same host, the
 page and its tensors share an origin and need no CORS.
 
-    https://tb-local.hel.sergibro.me/
+    https://tb-local.op0.cc/
 
 The bundle in `/srv/tb/local` has its baked-in default config path repointed at
 `config_all.json`, so the bare URL is enough; `?config=` still overrides it. That bundle
 also takes `?tsne=`, `?umap=`, `?pca=` and `?pcadim=` (see `tb/serve/README.md`). The
 public bundle in `/srv/tb/public` is untouched: public manifest, stock sample sizes.
 
-`config_all.json` lists all six tensors, `repos_25k_v2` first: the two v2 ones point at
-`tb-local`, the four v1 ones stay on the public data host, which its `*` CORS header
-allows the private page to fetch. Verified: v2 returns 401 unauthenticated and 404 on
+`config_all.json` lists all six tensors, `repos_25k_v2` first: the two v2 ones are
+relative paths, so they resolve against whichever `tb-local` hostname the page was
+opened on and the `basic_auth` credentials carry over; the four v1 ones stay absolute on
+the public data host, which its `*` CORS header allows the private page to fetch. The
+baked-in config path is relative for the same reason. Verified: v2 returns 401 unauthenticated and 404 on
 the public host, every v1 asset still returns 200 with CORS, and the public
 `config.json` still lists exactly the original four.
 
 To publish later: copy the four `*_v2.*` files into `/srv/tb/embeddings/`, regenerate
-`config.json` there with `--base-url https://tb-gh-recs.hel.sergibro.me`, and update the
+`config.json` there with `--base-url https://tb-gh-recs.op0.cc`, and update the
 README link.
 
 ### M4 — metadata recovered
